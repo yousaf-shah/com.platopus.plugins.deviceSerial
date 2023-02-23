@@ -1,0 +1,38 @@
+--
+-- For more information on build.settings see the Corona Build Guide at:
+-- http://docs.coronalabs.com/guide/distribution/buildSettings/index.html
+--
+
+settings = 
+{
+	--[[
+	orientation =
+	{
+		default = "portrait",
+		supported = { "portrait" }
+	},
+	--]]
+	--
+	android =
+	{
+		minSdkVersion = "26",
+		-- maxSdkVersion = "23",
+
+		usesPermissions =
+		{
+			"android.permission.INTERNET",
+			"android.permission.VIBRATE",
+		},
+		allowAppsReadOnlyAccessToFiles = false,
+	},
+
+
+	iphone =
+	{
+		xcassets = "Images.xcassets",
+		plist =
+		{
+			UILaunchStoryboardName = "LaunchScreen",
+		},
+	},
+}
