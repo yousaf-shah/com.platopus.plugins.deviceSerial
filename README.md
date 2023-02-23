@@ -19,7 +19,7 @@ askForPermission:
 The returned phoneState may contain:
 
 - **MISSING** = Your app does not have android.permissions.READ_PHONE_STATE in your build.settings (i.e. in the AndroidManifest.xml)
-- **REQUEST** = You need to request the user to grant the PHONE_STATE permission
+- **REQUEST** = You need to request the user to grant the PHONE_STATE permission (you called the fn with askForPermission = false)
 - **OK** = Permission is granted and the serial number will be returned if you ask for it.
 - **NEVER** = The user has already responded to the permissions dialog and ticked the 'Do not ask me again' checkbox.
 - **REQUESTED** = in the case that you called getPhoneState with askForPermission set to true, this indicates that the dialog box was presented to the user asking for permission.
