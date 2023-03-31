@@ -36,6 +36,8 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.lang.reflect.Method;
+
 /**
  * Implements the Lua interface for a Corona plugin.
  * <p>
@@ -86,6 +88,8 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 	public int invoke(LuaState L) {
 		// Register this plugin into Lua with the following functions.
 		NamedJavaFunction[] luaFunctions = new NamedJavaFunction[] {
+				new getDeviceProperty(),
+				new getDeviceSerialProperties(),
 				new getDeviceSerial(),
 				new getPhoneState(),
 		};
@@ -164,6 +168,102 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 	 * @param message simple string to sent to Lua in 'message' field.
 	 */
 //	@SuppressWarnings("unused")
+	public class getDeviceProperty implements com.naef.jnlua.NamedJavaFunction {
+		// This reports a class name back to Lua during the initiation phase.
+		@Override
+		public String getName() {
+			return "getDeviceProperty";
+		}
+
+		// This is what actually gets invoked by the Lua call
+		@Override
+		public int invoke(final LuaState luaState) {
+
+			String deviceProperty = "";
+			String propertyName = "";
+			Boolean serialNumberFound = false;
+
+			// check number or args
+			int nargs = luaState.getTop();
+			if ((nargs < 1) || (nargs > 1)){
+				Log.e("getDeviceProperty", "Expected 1 argument, got " + nargs);
+				return 0;
+			}
+
+			// get site name
+			if (luaState.type(1) == LuaType.STRING) {
+				propertyName = luaState.toString(1);
+			} else {
+				Log.e("getDeviceProperty", "propertyName (string) expected, got " + luaState.typeName(1));
+				return 0;
+			}
+
+			try {
+				deviceProperty = getDeviceProperty(propertyName);
+
+				if (deviceProperty == null) {
+					serialNumberFound = false;
+					deviceProperty = "";
+					Log.e("getDeviceProperty", "no property returned");
+				} else {
+					serialNumberFound = true;
+//					Log.e("getDeviceProperty", "Property, value = " + deviceProperty);
+				}
+				luaState.pushString(deviceProperty);
+
+			} catch (Exception e) {
+//				e.printStackTrace();
+				luaState.pushString("");
+			}
+
+			return 1;
+		}
+
+	}
+	public class getDeviceSerialProperties implements com.naef.jnlua.NamedJavaFunction {
+		// This reports a class name back to Lua during the initiation phase.
+		@Override
+		public String getName() {
+			return "getDeviceSerialProperties";
+		}
+
+		// This is what actually gets invoked by the Lua call
+		@Override
+		public int invoke(final LuaState luaState) {
+
+			String serialNumberProperties = "";
+			Boolean serialNumberFound = false;
+
+			// check number or args
+			int nargs = luaState.getTop();
+			if (nargs > 0 ){
+				Log.e("getDeviceSerialProperties","no arguments expected, got: " + nargs);
+				return 0;
+			}
+
+			try {
+				serialNumberProperties = getSerialNumberProperties();
+
+				if (serialNumberProperties == null) {
+					serialNumberFound = false;
+					serialNumberProperties = "";
+					Log.e("getDeviceSerialProperties", "no serial number returned");
+				} else {
+					serialNumberFound = true;
+//					Log.e("getDeviceSerialProperties", "Serial Number, value = " + serialNumberProperties);
+				}
+				luaState.pushString(serialNumberProperties);
+
+			} catch (Exception e) {
+//				e.printStackTrace();
+				luaState.pushString("");
+			}
+
+			return 1;
+		}
+
+	}
+
 	public class getDeviceSerial implements com.naef.jnlua.NamedJavaFunction {
 		// This reports a class name back to Lua during the initiation phase.
 		@Override
@@ -262,6 +362,48 @@ public class LuaLoader implements JavaFunction, CoronaRuntimeListener {
 
 	public String getSerialNumber() {
 		String serialNumber = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? Build.getSerial() : Build.SERIAL;
+		return TextUtils.isEmpty(serialNumber) ? "" : serialNumber + "";
+	}
+	
+	public String getSerialNumberProperties() {
+
+		String serialNumber = "";
+
+		try {
+			Class<?> c = Class.forName("android.os.SystemProperties");
+			Method get = c.getMethod("get", String.class);
+
+			serialNumber = (String) get.invoke(c, "ro.serialno");
+			if (serialNumber.equals(""))
+				serialNumber = (String) get.invoke(c, "ro.boot.serialno");
+			if (serialNumber.equals(""))
+				serialNumber = (String) get.invoke(c, "persist.sys.hwblk.sn");
+			if (serialNumber.equals(""))
+				serialNumber = "";
+		} catch (Exception e) {
+			e.printStackTrace();
+			serialNumber = "";
+		}
+
+		return TextUtils.isEmpty(serialNumber) ? "" : serialNumber + "";
+	}
+
+	public String getDeviceProperty(String propertyName) {
+
+		String serialNumber = "";
+
+		try {
+			Class<?> c = Class.forName("android.os.SystemProperties");
+			Method get = c.getMethod("get", String.class);
+
+			serialNumber = (String) get.invoke(c, propertyName);
+			if (serialNumber.equals(""))
+				serialNumber = "";
+		} catch (Exception e) {
+			e.printStackTrace();
+			serialNumber = "";
+		}
+
 		return TextUtils.isEmpty(serialNumber) ? "" : serialNumber + "";
 	}
 
